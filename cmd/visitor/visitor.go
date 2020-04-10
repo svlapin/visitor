@@ -49,7 +49,22 @@ func main() {
 		}
 	}
 
-	log.Println(abs)
+	for _, u := range abs {
+		statusCode, _, script, err := loader.LoadPage(u.String())
+
+		if err != nil {
+			log.Fatal(fmt.Errorf("failed to load script %v: %w", u, err))
+		}
+
+		log.Printf("loaded script %v: %v", u, statusCode)
+
+		strings, err := visitor.ExtractStrings(script)
+		if err != nil {
+			log.Fatal(fmt.Errorf("failed to extract strings %v: %w", u, err))
+		}
+
+		log.Println(strings)
+	}
 }
 
 func selectLoader() visitor.PageLoader {
