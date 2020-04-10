@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"time"
 
@@ -16,29 +17,44 @@ func main() {
 
 	loader := selectLoader()
 
-	url := os.Args[1]
+	targetURL := os.Args[1]
 
-	statusCode, body, err := loader.LoadPage(url)
+	statusCode, finalURL, body, err := loader.LoadPage(targetURL)
 
 	if err != nil {
-		log.Fatal(fmt.Errorf("%v: failed to get: %w", url, err))
+		log.Fatal(fmt.Errorf("%v: failed to get: %w", targetURL, err))
 	}
 
-	log.Printf("%v: got response: %v", url, statusCode)
+	if finalURL != targetURL {
+		log.Printf("%v: redirected: %v", targetURL, finalURL)
+	}
+	log.Printf("%v: got response: %v", targetURL, statusCode)
 
 	externalExtractor := selectExternalScriptExtractor()
 	refs, err := externalExtractor.ExtractRefs(body)
 
 	if err != nil {
-		log.Fatal(fmt.Errorf(" %v: failed to extract scripts: %w", url, err))
+		log.Fatal(fmt.Errorf("%v: failed to extract scripts: %w", targetURL, err))
 	}
 
-	log.Printf("%v: external scripts: %v\n", url, refs)
+	abs := make([]*url.URL, 0, len(refs))
+	f, err := url.Parse(finalURL)
+	if err != nil {
+		log.Fatal(fmt.Errorf("%v: failed to parse URL: %w", finalURL, err))
+	}
+
+	for _, u := range refs {
+		if r, err := visitor.ResolveURL(u, f); err == nil {
+			abs = append(abs, r)
+		}
+	}
+
+	log.Println(abs)
 }
 
 func selectLoader() visitor.PageLoader {
 	// TODO: make use of response buffer
-	return visitor.FastHTTPPageLoader{Timeout: 10 * time.Second}
+	return visitor.FastHTTPPageLoader{Timeout: 10 * time.Second, MaxRedirects: 5}
 }
 
 func selectExternalScriptExtractor() visitor.ExternalScriptsExtractor {

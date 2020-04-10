@@ -2,7 +2,7 @@ package visitor
 
 // PageLoader represents an interface to load HTML by URL
 type PageLoader interface {
-	LoadPage(url string) (statusCode int, body []byte, err error)
+	LoadPage(url string) (statusCode int, finalURL string, body []byte, err error)
 }
 
 // ExternalScriptsExtractor represents an interface to extract external
