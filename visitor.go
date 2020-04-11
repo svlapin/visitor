@@ -10,3 +10,9 @@ type PageLoader interface {
 type ExternalScriptsExtractor interface {
 	ExtractRefs(htmlBody []byte) (refs []string, err error)
 }
+
+// InlineScriptsExtractor represents an interface to extract inline
+// scripts from an HTML page
+type InlineScriptsExtractor interface {
+	ExtractInlineScripts(htmlBody []byte) (refs []string, err error)
+}

@@ -58,11 +58,25 @@ func main() {
 
 		log.Printf("loaded script %v: %v", u, statusCode)
 
-		strings, err := visitor.ExtractStrings(script)
+		_, err = visitor.ExtractStrings(script)
 		if err != nil {
 			log.Fatal(fmt.Errorf("failed to extract strings %v: %w", u, err))
 		}
 
+		// log.Println(strings)
+	}
+
+	inlineExtractor := selectInlineScriptExtractor()
+	inlineScripts, err := inlineExtractor.ExtractInlineScripts(body)
+	if err != nil {
+		log.Fatal(fmt.Errorf("%v: failed to extract inline scripts: %w", targetURL, err))
+	}
+
+	for _, scr := range inlineScripts {
+		strings, err := visitor.ExtractStrings([]byte(scr))
+		if err != nil {
+			log.Fatal(fmt.Errorf("failed to extract strings from inline script %v: %w", scr, err))
+		}
 		log.Println(strings)
 	}
 }
@@ -73,5 +87,9 @@ func selectLoader() visitor.PageLoader {
 }
 
 func selectExternalScriptExtractor() visitor.ExternalScriptsExtractor {
+	return visitor.GoqueryParser{}
+}
+
+func selectInlineScriptExtractor() visitor.InlineScriptsExtractor {
 	return visitor.GoqueryParser{}
 }

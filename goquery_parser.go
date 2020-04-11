@@ -28,3 +28,22 @@ func (g GoqueryParser) ExtractRefs(htmlBody []byte) ([]string, error) {
 
 	return refs, nil
 }
+
+// ExtractInlineScripts extracts an array of inline scripts from HTML document
+func (g GoqueryParser) ExtractInlineScripts(htmlBody []byte) ([]string, error) {
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(htmlBody))
+
+	if err != nil {
+		return nil, fmt.Errorf("goquery: %w", err)
+	}
+
+	res := make([]string, 0)
+
+	doc.Find("script").Each(func(_ int, s *goquery.Selection) {
+		if _, exists := s.Attr("src"); !exists {
+			res = append(res, s.Text())
+		}
+	})
+
+	return res, nil
+}
